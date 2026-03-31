@@ -41,7 +41,6 @@ function App() {
   }, [stageBounds]);
 
   const lineLength = stageDiagonal * lineLengthRatio;
-  const maxLineLength = stageDiagonal * 5;
 
   const segments = useReflectionLine(
     characterPos,
