@@ -5,9 +5,9 @@ interface Props {
   onChange: (ratios: StageRatios) => void;
 }
 
-const STEP = 0.005;
+const STEP = 0.005; // 0.5%
 
-function RatioSlider({
+function RatioRow({
   label,
   value,
   onChange,
@@ -18,19 +18,22 @@ function RatioSlider({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-gray-400 text-xs w-8 text-right">{label}</span>
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={STEP}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="flex-1 h-1.5 accent-green-400"
-      />
-      <span className="text-gray-300 text-xs font-mono w-12">
+      <span className="text-gray-400 text-xs w-6 text-right">{label}</span>
+      <button
+        onClick={() => onChange(Math.max(0, value - STEP))}
+        className="w-8 h-7 bg-gray-700 rounded text-white text-sm font-bold active:bg-gray-600 select-none"
+      >
+        -
+      </button>
+      <span className="text-gray-300 text-xs font-mono w-12 text-center">
         {(value * 100).toFixed(1)}%
       </span>
+      <button
+        onClick={() => onChange(Math.min(1, value + STEP))}
+        className="w-8 h-7 bg-gray-700 rounded text-white text-sm font-bold active:bg-gray-600 select-none"
+      >
+        +
+      </button>
     </div>
   );
 }
@@ -42,11 +45,11 @@ export function BoundsAdjuster({ ratios, onChange }: Props) {
 
   return (
     <div className="space-y-1.5">
-      <div className="text-gray-500 text-xs font-bold">枠位置調整</div>
-      <RatioSlider label="上" value={ratios.top} onChange={(v) => update('top', v)} />
-      <RatioSlider label="下" value={ratios.bottom} onChange={(v) => update('bottom', v)} />
-      <RatioSlider label="左" value={ratios.left} onChange={(v) => update('left', v)} />
-      <RatioSlider label="右" value={ratios.right} onChange={(v) => update('right', v)} />
+      <div className="text-gray-500 text-xs font-bold">枠位置調整 (0.5%刻み)</div>
+      <RatioRow label="上" value={ratios.top} onChange={(v) => update('top', v)} />
+      <RatioRow label="下" value={ratios.bottom} onChange={(v) => update('bottom', v)} />
+      <RatioRow label="左" value={ratios.left} onChange={(v) => update('left', v)} />
+      <RatioRow label="右" value={ratios.right} onChange={(v) => update('right', v)} />
     </div>
   );
 }

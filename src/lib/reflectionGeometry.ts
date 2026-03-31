@@ -35,8 +35,12 @@ export function computeReflectionPath(
   let current: Point = { ...origin };
   let remainingLength = maxLength;
 
-  // Build wall list: stage outer walls + block walls
-  const walls = buildWalls(bounds, blocks);
+  // Build wall list, excluding blocks that contain the origin
+  const activeBlocks = blocks.filter((b) => !isPointInsideRect(origin, b));
+  let walls = buildWalls(bounds, activeBlocks);
+  let skipBlocks = new Set(
+    blocks.map((_, i) => i).filter((i) => isPointInsideRect(origin, blocks[i]))
+  );
 
   for (let i = 0; i <= maxReflections && remainingLength > 0.1; i++) {
     const hit = findNearestWall(current, dx, dy, walls);
@@ -62,6 +66,13 @@ export function computeReflectionPath(
       dx = -dx;
     } else {
       dy = -dy;
+    }
+
+    // After first reflection, re-add any initially skipped blocks
+    // (character has now left them)
+    if (skipBlocks.size > 0) {
+      walls = buildWalls(bounds, blocks);
+      skipBlocks = new Set();
     }
   }
 
@@ -141,6 +152,15 @@ function findNearestWall(
   }
 
   return bestHit;
+}
+
+function isPointInsideRect(point: Point, rect: Rect): boolean {
+  return (
+    point.x > rect.x &&
+    point.x < rect.x + rect.width &&
+    point.y > rect.y &&
+    point.y < rect.y + rect.height
+  );
 }
 
 function distance(a: Point, b: Point): number {
