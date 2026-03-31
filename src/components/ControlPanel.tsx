@@ -6,13 +6,10 @@ import { BoundsAdjuster } from './BoundsAdjuster';
 interface Props {
   angle: number;
   reflectionCount: number;
-  lineLength: number;
-  maxLineLength: number;
   stageRatios: StageRatios;
   onAngleChange: (angle: number) => void;
   onAngleDelta: (delta: number) => void;
   onReflectionCountChange: (count: number) => void;
-  onLineLengthChange: (length: number) => void;
   onStageRatiosChange: (ratios: StageRatios) => void;
   onReset: () => void;
 }
@@ -20,13 +17,10 @@ interface Props {
 export function ControlPanel({
   angle,
   reflectionCount,
-  lineLength,
-  maxLineLength,
   stageRatios,
   onAngleChange,
   onAngleDelta,
   onReflectionCountChange,
-  onLineLengthChange,
   onStageRatiosChange,
   onReset,
 }: Props) {

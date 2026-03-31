@@ -9,6 +9,48 @@ interface Props {
   onCanvasTap: (imagePoint: Point) => void;
 }
 
+/**
+ * Draw a guide line: parallel to the first segment, passing through
+ * the top-left or bottom-left corner of the stage, from top wall to bottom wall.
+ */
+function drawGuideLine(
+  ctx: CanvasRenderingContext2D,
+  segments: ReflectionSegment[],
+  stageBounds: Rect,
+  scale: number,
+) {
+  if (segments.length === 0) return;
+
+  const seg = segments[0];
+  const dx = seg.end.x - seg.start.x;
+  const dy = seg.end.y - seg.start.y;
+  if (Math.abs(dx) < 0.001) return; // vertical line, no useful guide
+
+  const slope = dy / dx;
+  const top = stageBounds.y;
+  const bottom = stageBounds.y + stageBounds.height;
+  const left = stageBounds.x;
+
+  // Pick corner: if shooting upward (dy < 0), use bottom-left; otherwise top-left
+  const cornerY = dy < 0 ? bottom : top;
+  const corner: Point = { x: left, y: cornerY };
+
+  // Line equation: y - corner.y = slope * (x - corner.x)
+  // Find x at top wall: x = corner.x + (top - corner.y) / slope
+  // Find x at bottom wall: x = corner.x + (bottom - corner.y) / slope
+  const xAtTop = corner.x + (top - corner.y) / slope;
+  const xAtBottom = corner.x + (bottom - corner.y) / slope;
+
+  ctx.strokeStyle = 'rgba(255, 200, 0, 0.4)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath();
+  ctx.moveTo(xAtTop * scale, top * scale);
+  ctx.lineTo(xAtBottom * scale, bottom * scale);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
 export function StageCanvas({
   image,
   stageBounds,
@@ -18,6 +60,30 @@ export function StageCanvas({
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scaleRef = useRef(1);
+  const hasScrolled = useRef(false);
+
+  // Auto-scroll to show stage area after image loads
+  useEffect(() => {
+    if (!image || !stageBounds || hasScrolled.current) return;
+    hasScrolled.current = true;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Wait for canvas to render
+    requestAnimationFrame(() => {
+      const scale = canvas.clientWidth / image.naturalWidth;
+      const stageTopOnScreen = stageBounds.y * scale;
+      const canvasRect = canvas.getBoundingClientRect();
+      const scrollTarget = window.scrollY + canvasRect.top + stageTopOnScreen - 8;
+      window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+    });
+  }, [image, stageBounds]);
+
+  // Reset scroll flag when image changes
+  useEffect(() => {
+    hasScrolled.current = false;
+  }, [image]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -64,9 +130,13 @@ export function StageCanvas({
       ctx.stroke();
     }
 
+    // Draw guide line
+    if (stageBounds && segments.length > 0) {
+      drawGuideLine(ctx, segments, stageBounds, scale);
+    }
+
     // Draw reflection segments
     if (segments.length > 0) {
-      ctx.lineWidth = 3;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 

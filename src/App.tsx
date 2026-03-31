@@ -105,13 +105,10 @@ function App() {
           <ControlPanel
             angle={angle}
             reflectionCount={reflectionCount}
-            lineLength={lineLength}
-            maxLineLength={maxLineLength}
             stageRatios={stageRatios}
             onAngleChange={setAngle}
             onAngleDelta={handleAngleDelta}
             onReflectionCountChange={setReflectionCount}
-            onLineLengthChange={(len) => setLineLengthRatio(len / stageDiagonal)}
             onStageRatiosChange={setStageRatios}
             onReset={handleReset}
           />
