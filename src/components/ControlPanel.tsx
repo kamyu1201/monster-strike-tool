@@ -16,7 +16,7 @@ interface Props {
   onStageRatiosChange: (ratios: StageRatios) => void;
   onBlocksChange: (blocks: BlockRatio[]) => void;
   onBlockEditModeChange: (mode: boolean) => void;
-  onReset: () => void;
+  onImageSelect: () => void;
 }
 
 export function ControlPanel({
@@ -30,7 +30,7 @@ export function ControlPanel({
   onStageRatiosChange,
   onBlocksChange,
   onBlockEditModeChange,
-  onReset,
+  onImageSelect,
 }: Props) {
   const intervalRef = useRef<number | null>(null);
   const [showBounds, setShowBounds] = useState(false);
@@ -129,19 +129,19 @@ export function ControlPanel({
         <div className="flex-1" />
 
         <button
+          onClick={onImageSelect}
+          className="px-2 h-8 bg-indigo-600 rounded text-white text-xs font-medium active:bg-indigo-700 select-none"
+        >
+          画像選択
+        </button>
+
+        <button
           onClick={() => setShowBounds((v) => !v)}
           className={`px-2 h-8 rounded text-xs font-medium transition-colors select-none ${
             showBounds ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300'
           }`}
         >
           枠調整
-        </button>
-
-        <button
-          onClick={onReset}
-          className="px-2 h-8 bg-gray-700 rounded text-gray-300 text-xs active:bg-gray-600 select-none"
-        >
-          リセット
         </button>
       </div>
 

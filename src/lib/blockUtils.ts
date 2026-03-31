@@ -1,19 +1,18 @@
 import type { Rect, BlockRatio } from '../types';
-import { BLOCK_WIDTH_RATIO, BLOCK_HEIGHT_RATIO } from '../constants';
+import { BLOCK_SIZE_RATIO } from '../constants';
 
 /** Convert block ratios (relative to stage) to pixel Rects */
 export function blockRatiosToRects(
   blockRatios: BlockRatio[],
   stageBounds: Rect,
 ): Rect[] {
-  const blockW = stageBounds.width * BLOCK_WIDTH_RATIO;
-  const blockH = stageBounds.height * BLOCK_HEIGHT_RATIO;
+  const blockSize = stageBounds.width * BLOCK_SIZE_RATIO;
 
   return blockRatios.map((b) => ({
-    x: stageBounds.x + b.x * stageBounds.width - blockW / 2,
-    y: stageBounds.y + b.y * stageBounds.height - blockH / 2,
-    width: blockW,
-    height: blockH,
+    x: stageBounds.x + b.x * stageBounds.width - blockSize / 2,
+    y: stageBounds.y + b.y * stageBounds.height - blockSize / 2,
+    width: blockSize,
+    height: blockSize,
   }));
 }
 

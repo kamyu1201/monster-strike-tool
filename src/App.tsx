@@ -1,9 +1,8 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import type { Point, BlockRatio } from './types';
 import { calcStageBounds, type StageRatios } from './lib/stageBounds';
 import { blockRatiosToRects, pointToBlockRatio, findBlockAtPoint } from './lib/blockUtils';
 import { useReflectionLine } from './hooks/useReflectionLine';
-import { ImageUploader } from './components/ImageUploader';
 import { StageCanvas } from './components/StageCanvas';
 import { ControlPanel } from './components/ControlPanel';
 import {
@@ -32,6 +31,7 @@ function App() {
   const [stageRatios, setStageRatios] = useState<StageRatios>(DEFAULT_RATIOS);
   const [blockRatios, setBlockRatios] = useState<BlockRatio[]>([]);
   const [blockEditMode, setBlockEditMode] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const stageBounds = useMemo(() => {
     if (!image) return null;
@@ -67,14 +67,27 @@ function App() {
     setLineLengthRatio(DEFAULT_LINE_LENGTH_RATIO);
   }, []);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => handleImageLoad(img);
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+    // Reset so same file can be selected again
+    e.target.value = '';
+  };
+
   const handleCanvasTap = useCallback((point: Point) => {
     if (!stageBounds) return;
     const { x, y, width, height } = stageBounds;
     if (point.x < x || point.x > x + width || point.y < y || point.y > y + height) return;
 
     if (blockEditMode) {
-      // In block edit mode: tap on block to delete, tap elsewhere to add
-      const currentBlockRects = stageBounds ? blockRatiosToRects(blockRatios, stageBounds) : [];
+      const currentBlockRects = blockRatiosToRects(blockRatios, stageBounds);
       const hitIndex = findBlockAtPoint(point, currentBlockRects);
       if (hitIndex >= 0) {
         setBlockRatios((prev) => prev.filter((_, i) => i !== hitIndex));
@@ -88,19 +101,29 @@ function App() {
     setCharacterPos(point);
   }, [stageBounds, blockEditMode, blockRatios]);
 
+  const handleBlockDrag = useCallback((blockIndex: number, point: Point) => {
+    if (!stageBounds) return;
+    const ratio = pointToBlockRatio(point, stageBounds);
+    setBlockRatios((prev) => {
+      const next = [...prev];
+      next[blockIndex] = ratio;
+      return next;
+    });
+  }, [stageBounds]);
+
   const handleAngleDelta = useCallback((delta: number) => {
     setAngle((prev) => prev + delta);
   }, []);
 
-  const handleReset = useCallback(() => {
-    setCharacterPos(null);
-    setAngle(DEFAULT_ANGLE);
-    setReflectionCount(DEFAULT_REFLECTION_COUNT);
-    setLineLengthRatio(DEFAULT_LINE_LENGTH_RATIO);
-  }, []);
-
   return (
     <div className="min-h-svh flex flex-col bg-gray-950">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
       {!image ? (
         <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6">
           <h1 className="text-white text-xl font-bold">モンスト反射シミュレーター</h1>
@@ -108,7 +131,12 @@ function App() {
             ゲームのスクリーンショットをアップロードして、
             反射ルートをシミュレーションします
           </p>
-          <ImageUploader onImageLoad={handleImageLoad} />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full py-4 px-6 bg-indigo-600 text-white rounded-xl text-lg font-medium active:bg-indigo-700 transition-colors"
+          >
+            スクリーンショットを選択
+          </button>
         </div>
       ) : (
         <div className="flex flex-col pb-48">
@@ -118,16 +146,15 @@ function App() {
             characterPos={characterPos}
             segments={segments}
             blockRects={blockRects}
+            blockEditMode={blockEditMode}
             onCanvasTap={handleCanvasTap}
+            onBlockDrag={handleBlockDrag}
           />
           {!characterPos && !blockEditMode && (
             <div className="text-center text-yellow-400 text-sm py-2 bg-gray-900/80">
               画面をタップしてキャラクター位置を指定してください
             </div>
           )}
-          <div className="px-4 py-2">
-            <ImageUploader onImageLoad={handleImageLoad} />
-          </div>
           <ControlPanel
             angle={angle}
             reflectionCount={reflectionCount}
@@ -139,7 +166,7 @@ function App() {
             onStageRatiosChange={setStageRatios}
             onBlocksChange={setBlockRatios}
             onBlockEditModeChange={setBlockEditMode}
-            onReset={handleReset}
+            onImageSelect={() => fileInputRef.current?.click()}
           />
         </div>
       )}

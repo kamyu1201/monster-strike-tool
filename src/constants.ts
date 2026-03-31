@@ -25,6 +25,5 @@ export const ANGLE_STEP_FAST = 5; // degrees per long press tick
 export const LABEL_TO_CHAR_OFFSET_X_RATIO = 0.01;
 export const LABEL_TO_CHAR_OFFSET_Y_RATIO = 0.04;
 
-// Block size as ratio of stage dimensions
-export const BLOCK_WIDTH_RATIO = 0.10; // block width / stage width
-export const BLOCK_HEIGHT_RATIO = 0.06; // block height / stage height
+// Block size as ratio of stage dimensions (square block)
+export const BLOCK_SIZE_RATIO = 0.12; // block side length / stage width

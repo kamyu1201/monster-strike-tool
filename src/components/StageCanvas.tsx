@@ -7,13 +7,11 @@ interface Props {
   characterPos: Point | null;
   segments: ReflectionSegment[];
   blockRects: Rect[];
+  blockEditMode: boolean;
   onCanvasTap: (imagePoint: Point) => void;
+  onBlockDrag: (blockIndex: number, imagePoint: Point) => void;
 }
 
-/**
- * Draw guide lines: parallel to the first segment, passing through
- * both the top-left and bottom-left corners of the stage, from top wall to bottom wall.
- */
 function drawGuideLines(
   ctx: CanvasRenderingContext2D,
   segments: ReflectionSegment[],
@@ -25,7 +23,7 @@ function drawGuideLines(
   const seg = segments[0];
   const dx = seg.end.x - seg.start.x;
   const dy = seg.end.y - seg.start.y;
-  if (Math.abs(dx) < 0.001) return; // vertical line, no useful guide
+  if (Math.abs(dx) < 0.001) return;
 
   const slope = dy / dx;
   const top = stageBounds.y;
@@ -43,7 +41,6 @@ function drawGuideLines(
     const xAtTop = corner.x + (top - corner.y) / slope;
     const xAtBottom = corner.x + (bottom - corner.y) / slope;
 
-    // Glow
     ctx.strokeStyle = 'rgba(255, 200, 0, 0.25)';
     ctx.lineWidth = 6;
     ctx.beginPath();
@@ -51,7 +48,6 @@ function drawGuideLines(
     ctx.lineTo(xAtBottom * scale, bottom * scale);
     ctx.stroke();
 
-    // Main line
     ctx.strokeStyle = 'rgba(255, 200, 0, 0.7)';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -63,17 +59,59 @@ function drawGuideLines(
   ctx.setLineDash([]);
 }
 
+function getImagePoint(
+  e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent,
+  canvas: HTMLCanvasElement,
+  scale: number,
+): Point {
+  const rect = canvas.getBoundingClientRect();
+  let clientX: number, clientY: number;
+  if ('touches' in e && e.touches.length > 0) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else if ('changedTouches' in e && e.changedTouches.length > 0) {
+    clientX = e.changedTouches[0].clientX;
+    clientY = e.changedTouches[0].clientY;
+  } else if ('clientX' in e) {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  } else {
+    return { x: 0, y: 0 };
+  }
+  return {
+    x: (clientX - rect.left) / scale,
+    y: (clientY - rect.top) / scale,
+  };
+}
+
+function findBlockAtPoint(point: Point, blockRects: Rect[]): number {
+  for (let i = 0; i < blockRects.length; i++) {
+    const b = blockRects[i];
+    if (
+      point.x >= b.x && point.x <= b.x + b.width &&
+      point.y >= b.y && point.y <= b.y + b.height
+    ) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 export function StageCanvas({
   image,
   stageBounds,
   characterPos,
   segments,
   blockRects,
+  blockEditMode,
   onCanvasTap,
+  onBlockDrag,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scaleRef = useRef(1);
   const hasScrolled = useRef(false);
+  const draggingRef = useRef<{ blockIndex: number; startPoint: Point } | null>(null);
+  const hasDragged = useRef(false);
 
   // Auto-scroll to show stage area after image loads
   useEffect(() => {
@@ -83,7 +121,6 @@ export function StageCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Wait for canvas to render
     requestAnimationFrame(() => {
       const scale = canvas.clientWidth / image.naturalWidth;
       const stageTopOnScreen = stageBounds.y * scale;
@@ -93,7 +130,6 @@ export function StageCanvas({
     });
   }, [image, stageBounds]);
 
-  // Reset scroll flag when image changes
   useEffect(() => {
     hasScrolled.current = false;
   }, [image]);
@@ -115,19 +151,15 @@ export function StageCanvas({
     ctx.scale(dpr, dpr);
     scaleRef.current = scale;
 
-    // Draw background image
     ctx.drawImage(image, 0, 0, displayWidth, displayHeight);
 
-    // Draw stage bounds
     if (stageBounds) {
       ctx.strokeStyle = 'rgba(0, 255, 128, 0.6)';
       ctx.lineWidth = 2;
       ctx.setLineDash([6, 4]);
       ctx.strokeRect(
-        stageBounds.x * scale,
-        stageBounds.y * scale,
-        stageBounds.width * scale,
-        stageBounds.height * scale,
+        stageBounds.x * scale, stageBounds.y * scale,
+        stageBounds.width * scale, stageBounds.height * scale,
       );
       ctx.setLineDash([]);
     }
@@ -141,7 +173,6 @@ export function StageCanvas({
       ctx.strokeRect(block.x * scale, block.y * scale, block.width * scale, block.height * scale);
     }
 
-    // Draw character position marker
     if (characterPos) {
       ctx.beginPath();
       ctx.arc(characterPos.x * scale, characterPos.y * scale, 8, 0, Math.PI * 2);
@@ -152,17 +183,14 @@ export function StageCanvas({
       ctx.stroke();
     }
 
-    // Draw guide line
     if (stageBounds && segments.length > 0) {
       drawGuideLines(ctx, segments, stageBounds, scale);
     }
 
-    // Draw reflection segments
     if (segments.length > 0) {
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
-      // Glow effect
       ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
       ctx.lineWidth = 8;
       ctx.beginPath();
@@ -172,7 +200,6 @@ export function StageCanvas({
       }
       ctx.stroke();
 
-      // Main line
       ctx.strokeStyle = 'rgba(0, 255, 255, 0.9)';
       ctx.lineWidth = 3;
       ctx.beginPath();
@@ -182,7 +209,6 @@ export function StageCanvas({
       }
       ctx.stroke();
 
-      // Reflection points
       for (let i = 0; i < segments.length - 1; i++) {
         const pt = segments[i].end;
         ctx.beginPath();
@@ -197,30 +223,67 @@ export function StageCanvas({
     draw();
   }, [draw]);
 
+  // Touch/mouse drag handling for blocks
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleStart = (e: TouchEvent | MouseEvent) => {
+      if (!blockEditMode || !image) return;
+      const scale = scaleRef.current;
+      const point = getImagePoint(e, canvas, scale);
+      const hitIndex = findBlockAtPoint(point, blockRects);
+      if (hitIndex >= 0) {
+        e.preventDefault();
+        draggingRef.current = { blockIndex: hitIndex, startPoint: point };
+        hasDragged.current = false;
+      }
+    };
+
+    const handleMove = (e: TouchEvent | MouseEvent) => {
+      if (!draggingRef.current || !image) return;
+      e.preventDefault();
+      const scale = scaleRef.current;
+      const point = getImagePoint(e, canvas, scale);
+      hasDragged.current = true;
+      onBlockDrag(draggingRef.current.blockIndex, point);
+    };
+
+    const handleEnd = () => {
+      draggingRef.current = null;
+    };
+
+    canvas.addEventListener('touchstart', handleStart, { passive: false });
+    canvas.addEventListener('touchmove', handleMove, { passive: false });
+    canvas.addEventListener('touchend', handleEnd);
+    canvas.addEventListener('mousedown', handleStart);
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('mouseup', handleEnd);
+
+    return () => {
+      canvas.removeEventListener('touchstart', handleStart);
+      canvas.removeEventListener('touchmove', handleMove);
+      canvas.removeEventListener('touchend', handleEnd);
+      canvas.removeEventListener('mousedown', handleStart);
+      canvas.removeEventListener('mousemove', handleMove);
+      canvas.removeEventListener('mouseup', handleEnd);
+    };
+  }, [blockEditMode, blockRects, image, onBlockDrag]);
+
   const handleTap = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    // Skip if we just finished a drag
+    if (hasDragged.current) {
+      hasDragged.current = false;
+      return;
+    }
+
     const canvas = canvasRef.current;
     if (!canvas || !image) return;
 
     e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-
-    let clientX: number, clientY: number;
-    if ('touches' in e) {
-      clientX = e.changedTouches[0].clientX;
-      clientY = e.changedTouches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-
-    const canvasX = clientX - rect.left;
-    const canvasY = clientY - rect.top;
     const scale = scaleRef.current;
-
-    onCanvasTap({
-      x: canvasX / scale,
-      y: canvasY / scale,
-    });
+    const point = getImagePoint(e, canvas, scale);
+    onCanvasTap(point);
   };
 
   return (
