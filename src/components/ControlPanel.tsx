@@ -61,18 +61,26 @@ export function ControlPanel({
           &laquo;
         </button>
         <button
-          onClick={() => onAngleChange(angle + ANGLE_STEP)}
+          onMouseDown={() => startRepeat(ANGLE_STEP)}
+          onMouseUp={stopRepeat}
+          onMouseLeave={stopRepeat}
+          onTouchStart={(e) => { e.preventDefault(); startRepeat(ANGLE_STEP); }}
+          onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
           className="w-12 h-12 bg-gray-700 rounded-lg text-white text-xl font-bold active:bg-gray-600 select-none"
         >
           &lsaquo;
         </button>
 
         <div className="flex-1 text-center text-white text-sm font-mono">
-          {angle.toFixed(1)}&deg;
+          {angle.toFixed(2)}&deg;
         </div>
 
         <button
-          onClick={() => onAngleChange(angle - ANGLE_STEP)}
+          onMouseDown={() => startRepeat(-ANGLE_STEP)}
+          onMouseUp={stopRepeat}
+          onMouseLeave={stopRepeat}
+          onTouchStart={(e) => { e.preventDefault(); startRepeat(-ANGLE_STEP); }}
+          onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
           className="w-12 h-12 bg-gray-700 rounded-lg text-white text-xl font-bold active:bg-gray-600 select-none"
         >
           &rsaquo;
