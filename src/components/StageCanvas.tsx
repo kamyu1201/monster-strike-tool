@@ -6,6 +6,7 @@ interface Props {
   stageBounds: Rect | null;
   characterPos: Point | null;
   segments: ReflectionSegment[];
+  blockRects: Rect[];
   onCanvasTap: (imagePoint: Point) => void;
 }
 
@@ -67,6 +68,7 @@ export function StageCanvas({
   stageBounds,
   characterPos,
   segments,
+  blockRects,
   onCanvasTap,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -130,6 +132,15 @@ export function StageCanvas({
       ctx.setLineDash([]);
     }
 
+    // Draw blocks
+    for (const block of blockRects) {
+      ctx.fillStyle = 'rgba(120, 120, 120, 0.6)';
+      ctx.fillRect(block.x * scale, block.y * scale, block.width * scale, block.height * scale);
+      ctx.strokeStyle = 'rgba(200, 200, 200, 0.8)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(block.x * scale, block.y * scale, block.width * scale, block.height * scale);
+    }
+
     // Draw character position marker
     if (characterPos) {
       ctx.beginPath();
@@ -180,7 +191,7 @@ export function StageCanvas({
         ctx.fill();
       }
     }
-  }, [image, stageBounds, characterPos, segments]);
+  }, [image, stageBounds, characterPos, segments, blockRects]);
 
   useEffect(() => {
     draw();

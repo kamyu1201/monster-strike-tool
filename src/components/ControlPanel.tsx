@@ -1,15 +1,21 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
 import { ANGLE_STEP, ANGLE_STEP_FAST } from '../constants';
 import type { StageRatios } from '../lib/stageBounds';
+import type { BlockRatio } from '../types';
 import { BoundsAdjuster } from './BoundsAdjuster';
+import { BlockPanel } from './BlockPanel';
 
 interface Props {
   angle: number;
   reflectionCount: number;
   stageRatios: StageRatios;
+  blocks: BlockRatio[];
+  blockEditMode: boolean;
   onAngleDelta: (delta: number) => void;
   onReflectionCountChange: (count: number) => void;
   onStageRatiosChange: (ratios: StageRatios) => void;
+  onBlocksChange: (blocks: BlockRatio[]) => void;
+  onBlockEditModeChange: (mode: boolean) => void;
   onReset: () => void;
 }
 
@@ -17,9 +23,13 @@ export function ControlPanel({
   angle,
   reflectionCount,
   stageRatios,
+  blocks,
+  blockEditMode,
   onAngleDelta,
   onReflectionCountChange,
   onStageRatiosChange,
+  onBlocksChange,
+  onBlockEditModeChange,
   onReset,
 }: Props) {
   const intervalRef = useRef<number | null>(null);
@@ -95,7 +105,7 @@ export function ControlPanel({
         </button>
       </div>
 
-      {/* Reflection count & line length */}
+      {/* Reflection count & options */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="text-gray-400 text-xs whitespace-nowrap">反射</span>
@@ -134,6 +144,14 @@ export function ControlPanel({
           リセット
         </button>
       </div>
+
+      {/* Block panel */}
+      <BlockPanel
+        blocks={blocks}
+        editMode={blockEditMode}
+        onEditModeChange={onBlockEditModeChange}
+        onBlocksChange={onBlocksChange}
+      />
 
       {/* Bounds adjuster (collapsible) */}
       {showBounds && (

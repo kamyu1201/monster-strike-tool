@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
-import type { Point } from './types';
+import type { Point, BlockRatio } from './types';
 import { calcStageBounds, type StageRatios } from './lib/stageBounds';
+import { blockRatiosToRects, pointToBlockRatio, findBlockAtPoint } from './lib/blockUtils';
 import { useReflectionLine } from './hooks/useReflectionLine';
 import { ImageUploader } from './components/ImageUploader';
 import { StageCanvas } from './components/StageCanvas';
@@ -29,6 +30,8 @@ function App() {
   const [reflectionCount, setReflectionCount] = useState(DEFAULT_REFLECTION_COUNT);
   const [lineLengthRatio, setLineLengthRatio] = useState(DEFAULT_LINE_LENGTH_RATIO);
   const [stageRatios, setStageRatios] = useState<StageRatios>(DEFAULT_RATIOS);
+  const [blockRatios, setBlockRatios] = useState<BlockRatio[]>([]);
+  const [blockEditMode, setBlockEditMode] = useState(false);
 
   const stageBounds = useMemo(() => {
     if (!image) return null;
@@ -42,12 +45,18 @@ function App() {
 
   const lineLength = stageDiagonal * lineLengthRatio;
 
+  const blockRects = useMemo(() => {
+    if (!stageBounds) return [];
+    return blockRatiosToRects(blockRatios, stageBounds);
+  }, [blockRatios, stageBounds]);
+
   const segments = useReflectionLine(
     characterPos,
     angle,
     stageBounds,
     reflectionCount,
     lineLength,
+    blockRects,
   );
 
   const handleImageLoad = useCallback((img: HTMLImageElement) => {
@@ -62,8 +71,22 @@ function App() {
     if (!stageBounds) return;
     const { x, y, width, height } = stageBounds;
     if (point.x < x || point.x > x + width || point.y < y || point.y > y + height) return;
+
+    if (blockEditMode) {
+      // In block edit mode: tap on block to delete, tap elsewhere to add
+      const currentBlockRects = stageBounds ? blockRatiosToRects(blockRatios, stageBounds) : [];
+      const hitIndex = findBlockAtPoint(point, currentBlockRects);
+      if (hitIndex >= 0) {
+        setBlockRatios((prev) => prev.filter((_, i) => i !== hitIndex));
+      } else {
+        const ratio = pointToBlockRatio(point, stageBounds);
+        setBlockRatios((prev) => [...prev, ratio]);
+      }
+      return;
+    }
+
     setCharacterPos(point);
-  }, [stageBounds]);
+  }, [stageBounds, blockEditMode, blockRatios]);
 
   const handleAngleDelta = useCallback((delta: number) => {
     setAngle((prev) => prev + delta);
@@ -88,15 +111,16 @@ function App() {
           <ImageUploader onImageLoad={handleImageLoad} />
         </div>
       ) : (
-        <div className="flex flex-col pb-44">
+        <div className="flex flex-col pb-48">
           <StageCanvas
             image={image}
             stageBounds={stageBounds}
             characterPos={characterPos}
             segments={segments}
+            blockRects={blockRects}
             onCanvasTap={handleCanvasTap}
           />
-          {!characterPos && (
+          {!characterPos && !blockEditMode && (
             <div className="text-center text-yellow-400 text-sm py-2 bg-gray-900/80">
               画面をタップしてキャラクター位置を指定してください
             </div>
@@ -108,9 +132,13 @@ function App() {
             angle={angle}
             reflectionCount={reflectionCount}
             stageRatios={stageRatios}
+            blocks={blockRatios}
+            blockEditMode={blockEditMode}
             onAngleDelta={handleAngleDelta}
             onReflectionCountChange={setReflectionCount}
             onStageRatiosChange={setStageRatios}
+            onBlocksChange={setBlockRatios}
+            onBlockEditModeChange={setBlockEditMode}
             onReset={handleReset}
           />
         </div>

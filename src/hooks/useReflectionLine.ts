@@ -8,9 +8,10 @@ export function useReflectionLine(
   stageBounds: Rect | null,
   reflectionCount: number,
   lineLength: number,
+  blocks: Rect[] = [],
 ): ReflectionSegment[] {
   return useMemo(() => {
     if (!origin || !stageBounds) return [];
-    return computeReflectionPath(origin, angle, stageBounds, reflectionCount, lineLength);
-  }, [origin, angle, stageBounds, reflectionCount, lineLength]);
+    return computeReflectionPath(origin, angle, stageBounds, reflectionCount, lineLength, blocks);
+  }, [origin, angle, stageBounds, reflectionCount, lineLength, blocks]);
 }

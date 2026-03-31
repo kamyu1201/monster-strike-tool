@@ -1,8 +1,23 @@
 import type { Point, Rect, ReflectionSegment } from '../types';
 
+type WallType = 'horizontal' | 'vertical';
+
+interface WallHit {
+  point: Point;
+  wallType: WallType;
+  t: number;
+}
+
+interface WallSegment {
+  axis: 'x' | 'y';
+  value: number;
+  min: number;
+  max: number;
+}
+
 /**
  * Compute reflection segments for a ray starting at `origin` with `angleDeg`
- * bouncing inside `bounds` for up to `maxReflections` wall hits,
+ * bouncing inside `bounds` (and off `blocks`) for up to `maxReflections` wall hits,
  * with a maximum total line length of `maxLength`.
  */
 export function computeReflectionPath(
@@ -11,6 +26,7 @@ export function computeReflectionPath(
   bounds: Rect,
   maxReflections: number,
   maxLength: number,
+  blocks: Rect[] = [],
 ): ReflectionSegment[] {
   const segments: ReflectionSegment[] = [];
   const angleRad = (angleDeg * Math.PI) / 180;
@@ -19,13 +35,15 @@ export function computeReflectionPath(
   let current: Point = { ...origin };
   let remainingLength = maxLength;
 
+  // Build wall list: stage outer walls + block walls
+  const walls = buildWalls(bounds, blocks);
+
   for (let i = 0; i <= maxReflections && remainingLength > 0.1; i++) {
-    const hit = findWallIntersection(current, dx, dy, bounds);
+    const hit = findNearestWall(current, dx, dy, walls);
     if (!hit) break;
 
     const segLen = distance(current, hit.point);
     if (segLen > remainingLength) {
-      // Truncate this segment
       const ratio = remainingLength / segLen;
       const end: Point = {
         x: current.x + (hit.point.x - current.x) * ratio,
@@ -40,7 +58,7 @@ export function computeReflectionPath(
     current = hit.point;
 
     // Reflect direction
-    if (hit.wall === 'left' || hit.wall === 'right') {
+    if (hit.wallType === 'vertical') {
       dx = -dx;
     } else {
       dy = -dy;
@@ -50,34 +68,45 @@ export function computeReflectionPath(
   return segments;
 }
 
-type Wall = 'top' | 'bottom' | 'left' | 'right';
-
-interface WallHit {
-  point: Point;
-  wall: Wall;
-  t: number;
-}
-
-function findWallIntersection(
-  origin: Point,
-  dx: number,
-  dy: number,
-  bounds: Rect,
-): WallHit | null {
+function buildWalls(bounds: Rect, blocks: Rect[]): WallSegment[] {
   const left = bounds.x;
   const right = bounds.x + bounds.width;
   const top = bounds.y;
   const bottom = bounds.y + bounds.height;
 
-  let bestHit: WallHit | null = null;
-
-  // Check each wall
-  const walls: { wall: Wall; axis: 'x' | 'y'; value: number }[] = [
-    { wall: 'left', axis: 'x', value: left },
-    { wall: 'right', axis: 'x', value: right },
-    { wall: 'top', axis: 'y', value: top },
-    { wall: 'bottom', axis: 'y', value: bottom },
+  const walls: WallSegment[] = [
+    // Stage outer walls
+    { axis: 'x', value: left, min: top, max: bottom },
+    { axis: 'x', value: right, min: top, max: bottom },
+    { axis: 'y', value: top, min: left, max: right },
+    { axis: 'y', value: bottom, min: left, max: right },
   ];
+
+  // Block walls
+  for (const block of blocks) {
+    const bLeft = block.x;
+    const bRight = block.x + block.width;
+    const bTop = block.y;
+    const bBottom = block.y + block.height;
+
+    walls.push(
+      { axis: 'x', value: bLeft, min: bTop, max: bBottom },
+      { axis: 'x', value: bRight, min: bTop, max: bBottom },
+      { axis: 'y', value: bTop, min: bLeft, max: bRight },
+      { axis: 'y', value: bBottom, min: bLeft, max: bRight },
+    );
+  }
+
+  return walls;
+}
+
+function findNearestWall(
+  origin: Point,
+  dx: number,
+  dy: number,
+  walls: WallSegment[],
+): WallHit | null {
+  let bestHit: WallHit | null = null;
 
   for (const w of walls) {
     let t: number;
@@ -90,22 +119,24 @@ function findWallIntersection(
       if (t <= 1e-6) continue;
       px = w.value;
       py = origin.y + dy * t;
-      if (py < top - 0.1 || py > bottom + 0.1) continue;
+      if (py < w.min - 0.1 || py > w.max + 0.1) continue;
+      py = Math.max(w.min, Math.min(w.max, py));
     } else {
       if (Math.abs(dy) < 1e-10) continue;
       t = (w.value - origin.y) / dy;
       if (t <= 1e-6) continue;
       px = origin.x + dx * t;
       py = w.value;
-      if (px < left - 0.1 || px > right + 0.1) continue;
+      if (px < w.min - 0.1 || px > w.max + 0.1) continue;
+      px = Math.max(w.min, Math.min(w.max, px));
     }
 
-    // Clamp to bounds
-    px = Math.max(left, Math.min(right, px));
-    py = Math.max(top, Math.min(bottom, py));
-
     if (!bestHit || t < bestHit.t) {
-      bestHit = { point: { x: px, y: py }, wall: w.wall, t };
+      bestHit = {
+        point: { x: px, y: py },
+        wallType: w.axis === 'x' ? 'vertical' : 'horizontal',
+        t,
+      };
     }
   }
 
