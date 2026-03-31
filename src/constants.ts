@@ -26,4 +26,4 @@ export const LABEL_TO_CHAR_OFFSET_X_RATIO = 0.01;
 export const LABEL_TO_CHAR_OFFSET_Y_RATIO = 0.04;
 
 // Block size as ratio of stage dimensions (square block)
-export const BLOCK_SIZE_RATIO = 0.165; // block side length / stage width
+export const BLOCK_SIZE_RATIO = 0.215; // block side length / stage width
