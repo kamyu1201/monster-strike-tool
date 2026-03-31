@@ -120,7 +120,7 @@ function App() {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/png,image/jpeg,image/heic"
         onChange={handleFileChange}
         className="hidden"
       />

@@ -12,10 +12,33 @@ interface Props {
   onBlockDrag: (blockIndex: number, imagePoint: Point) => void;
 }
 
+function drawStyledLine(
+  ctx: CanvasRenderingContext2D,
+  x1: number, y1: number, x2: number, y2: number,
+  scale: number,
+  color: string,
+  glowColor: string,
+) {
+  ctx.strokeStyle = glowColor;
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(x1 * scale, y1 * scale);
+  ctx.lineTo(x2 * scale, y2 * scale);
+  ctx.stroke();
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x1 * scale, y1 * scale);
+  ctx.lineTo(x2 * scale, y2 * scale);
+  ctx.stroke();
+}
+
 function drawGuideLines(
   ctx: CanvasRenderingContext2D,
   segments: ReflectionSegment[],
   stageBounds: Rect,
+  characterPos: Point | null,
   scale: number,
 ) {
   if (segments.length === 0) return;
@@ -29,31 +52,54 @@ function drawGuideLines(
   const top = stageBounds.y;
   const bottom = stageBounds.y + stageBounds.height;
   const left = stageBounds.x;
+  const right = stageBounds.x + stageBounds.width;
 
+  ctx.setLineDash([10, 6]);
+
+  // Parallel guide lines through left corners
   const corners: Point[] = [
     { x: left, y: top },
     { x: left, y: bottom },
   ];
 
-  ctx.setLineDash([10, 6]);
-
   for (const corner of corners) {
     const xAtTop = corner.x + (top - corner.y) / slope;
     const xAtBottom = corner.x + (bottom - corner.y) / slope;
+    drawStyledLine(ctx, xAtTop, top, xAtBottom, bottom, scale,
+      'rgba(255, 200, 0, 0.7)', 'rgba(255, 200, 0, 0.25)');
+  }
 
-    ctx.strokeStyle = 'rgba(255, 200, 0, 0.25)';
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.moveTo(xAtTop * scale, top * scale);
-    ctx.lineTo(xAtBottom * scale, bottom * scale);
-    ctx.stroke();
+  // Reverse guide line: from character, opposite direction to first wall hit
+  if (characterPos) {
+    const revDx = -dx;
+    const revDy = -dy;
+    const len = Math.sqrt(revDx * revDx + revDy * revDy);
+    if (len > 0.001) {
+      const ndx = revDx / len;
+      const ndy = revDy / len;
 
-    ctx.strokeStyle = 'rgba(255, 200, 0, 0.7)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(xAtTop * scale, top * scale);
-    ctx.lineTo(xAtBottom * scale, bottom * scale);
-    ctx.stroke();
+      // Find intersection with stage boundary in reverse direction
+      let minT = Infinity;
+      const walls = [
+        { value: left, axis: 'x' as const },
+        { value: right, axis: 'x' as const },
+        { value: top, axis: 'y' as const },
+        { value: bottom, axis: 'y' as const },
+      ];
+      for (const w of walls) {
+        const t = w.axis === 'x'
+          ? (Math.abs(ndx) > 1e-10 ? (w.value - characterPos.x) / ndx : Infinity)
+          : (Math.abs(ndy) > 1e-10 ? (w.value - characterPos.y) / ndy : Infinity);
+        if (t > 0.1 && t < minT) minT = t;
+      }
+
+      if (isFinite(minT)) {
+        const endX = characterPos.x + ndx * minT;
+        const endY = characterPos.y + ndy * minT;
+        drawStyledLine(ctx, characterPos.x, characterPos.y, endX, endY, scale,
+          'rgba(255, 100, 100, 0.6)', 'rgba(255, 100, 100, 0.2)');
+      }
+    }
   }
 
   ctx.setLineDash([]);
@@ -184,7 +230,7 @@ export function StageCanvas({
     }
 
     if (stageBounds && segments.length > 0) {
-      drawGuideLines(ctx, segments, stageBounds, scale);
+      drawGuideLines(ctx, segments, stageBounds, characterPos, scale);
     }
 
     if (segments.length > 0) {
