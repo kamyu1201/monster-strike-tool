@@ -7,7 +7,6 @@ interface Props {
   angle: number;
   reflectionCount: number;
   stageRatios: StageRatios;
-  onAngleChange: (angle: number) => void;
   onAngleDelta: (delta: number) => void;
   onReflectionCountChange: (count: number) => void;
   onStageRatiosChange: (ratios: StageRatios) => void;
@@ -18,7 +17,6 @@ export function ControlPanel({
   angle,
   reflectionCount,
   stageRatios,
-  onAngleChange,
   onAngleDelta,
   onReflectionCountChange,
   onStageRatiosChange,

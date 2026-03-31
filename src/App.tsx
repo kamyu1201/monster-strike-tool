@@ -105,7 +105,6 @@ function App() {
             angle={angle}
             reflectionCount={reflectionCount}
             stageRatios={stageRatios}
-            onAngleChange={setAngle}
             onAngleDelta={handleAngleDelta}
             onReflectionCountChange={setReflectionCount}
             onStageRatiosChange={setStageRatios}
