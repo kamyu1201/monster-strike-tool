@@ -36,14 +36,23 @@ function drawGuideLines(
     { x: left, y: bottom },
   ];
 
-  ctx.strokeStyle = 'rgba(255, 200, 0, 0.4)';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([8, 6]);
+  ctx.setLineDash([10, 6]);
 
   for (const corner of corners) {
     const xAtTop = corner.x + (top - corner.y) / slope;
     const xAtBottom = corner.x + (bottom - corner.y) / slope;
 
+    // Glow
+    ctx.strokeStyle = 'rgba(255, 200, 0, 0.25)';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(xAtTop * scale, top * scale);
+    ctx.lineTo(xAtBottom * scale, bottom * scale);
+    ctx.stroke();
+
+    // Main line
+    ctx.strokeStyle = 'rgba(255, 200, 0, 0.7)';
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(xAtTop * scale, top * scale);
     ctx.lineTo(xAtBottom * scale, bottom * scale);

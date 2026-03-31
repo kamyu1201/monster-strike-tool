@@ -59,8 +59,11 @@ function App() {
   }, []);
 
   const handleCanvasTap = useCallback((point: Point) => {
+    if (!stageBounds) return;
+    const { x, y, width, height } = stageBounds;
+    if (point.x < x || point.x > x + width || point.y < y || point.y > y + height) return;
     setCharacterPos(point);
-  }, []);
+  }, [stageBounds]);
 
   const handleAngleDelta = useCallback((delta: number) => {
     setAngle((prev) => prev + delta);

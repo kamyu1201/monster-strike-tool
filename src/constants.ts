@@ -1,10 +1,10 @@
 // Stage boundary ratios relative to screenshot dimensions.
 // These are fixed across all stages.
 // Values calibrated from sample.png — may need adjustment.
-export const STAGE_LEFT_RATIO = 0.025;
-export const STAGE_RIGHT_RATIO = 0.975;
-export const STAGE_TOP_RATIO = 0.185;
-export const STAGE_BOTTOM_RATIO = 0.680;
+export const STAGE_LEFT_RATIO = 0.040;
+export const STAGE_RIGHT_RATIO = 0.960;
+export const STAGE_TOP_RATIO = 0.190;
+export const STAGE_BOTTOM_RATIO = 0.675;
 
 // Bottom card region ratios
 export const CARD_REGION_TOP_RATIO = 0.78;
