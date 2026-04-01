@@ -21,6 +21,7 @@ interface Props {
   onBlocksChange: (blocks: BlockRatio[]) => void;
   onBlockEditModeChange: (mode: boolean) => void;
   onAutoDetect: () => void;
+  onManualTurnSelect: (turnIndex: number) => void;
   onImageSelect: () => void;
 }
 
@@ -38,6 +39,7 @@ export function ControlPanel({
   onBlocksChange,
   onBlockEditModeChange,
   onAutoDetect,
+  onManualTurnSelect,
   onImageSelect,
 }: Props) {
   const intervalRef = useRef<number | null>(null);
@@ -163,6 +165,27 @@ export function ControlPanel({
         >
           枠調整
         </button>
+      </div>
+
+      {/* Manual turn select */}
+      <div className="flex items-center gap-2">
+        <span className="text-gray-400 text-xs whitespace-nowrap">手番指定</span>
+        {TURN_LABELS.map((label, i) => (
+          <button
+            key={label}
+            onClick={() => onManualTurnSelect(i)}
+            disabled={detecting}
+            className={`flex-1 h-7 rounded text-xs font-medium transition-colors select-none ${
+              detectedTurn === i
+                ? 'bg-orange-600 text-white'
+                : detecting
+                  ? 'bg-gray-700 text-gray-500 cursor-wait'
+                  : 'bg-gray-700 text-gray-300 active:bg-gray-600'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Block panel */}

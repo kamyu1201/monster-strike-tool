@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useRef } from 'react';
 import type { Point, BlockRatio } from './types';
 import { calcStageBounds, type StageRatios } from './lib/stageBounds';
 import { blockRatiosToRects, pointToBlockRatio, findBlockAtPoint } from './lib/blockUtils';
-import { autoDetectCharacter } from './lib/detectCharPosition';
+import { autoDetectCharacter, detectCharPosition } from './lib/detectCharPosition';
 import { useReflectionLine } from './hooks/useReflectionLine';
 import { StageCanvas } from './components/StageCanvas';
 import { ControlPanel } from './components/ControlPanel';
@@ -162,6 +162,20 @@ function App() {
     }
   }, [image, stageBounds, detecting]);
 
+  const handleManualTurnSelect = useCallback(async (turnIndex: number) => {
+    if (!image || !stageBounds || detecting) return;
+    setDetecting(true);
+    try {
+      const position = await detectCharPosition(image, turnIndex, stageBounds);
+      if (position) {
+        setCharacterPos(position);
+        setDetectedTurn(turnIndex);
+      }
+    } finally {
+      setDetecting(false);
+    }
+  }, [image, stageBounds, detecting]);
+
   const handleAngleDelta = useCallback((delta: number) => {
     setAngle((prev) => prev + delta);
   }, []);
@@ -220,6 +234,7 @@ function App() {
             onBlocksChange={setBlockRatios}
             onBlockEditModeChange={setBlockEditMode}
             onAutoDetect={handleAutoDetect}
+            onManualTurnSelect={handleManualTurnSelect}
             onImageSelect={() => fileInputRef.current?.click()}
           />
         </div>

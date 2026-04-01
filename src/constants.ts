@@ -22,8 +22,8 @@ export const ANGLE_STEP = 0.25; // degrees per button press
 export const ANGLE_STEP_FAST = 5; // degrees per long press tick
 
 // Character label offset: character center is below and slightly to the right of the label
-export const LABEL_TO_CHAR_OFFSET_X_RATIO = 0.01;
-export const LABEL_TO_CHAR_OFFSET_Y_RATIO = 0.04;
+export const LABEL_TO_CHAR_OFFSET_X_RATIO = 0.005;
+export const LABEL_TO_CHAR_OFFSET_Y_RATIO = 0.035;
 
 // Block size as ratio of stage dimensions (square block)
 export const BLOCK_SIZE_RATIO = 0.215; // block side length / stage width
