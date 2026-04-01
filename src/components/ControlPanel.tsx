@@ -5,17 +5,22 @@ import type { BlockRatio } from '../types';
 import { BoundsAdjuster } from './BoundsAdjuster';
 import { BlockPanel } from './BlockPanel';
 
+const TURN_LABELS = ['1st', '2nd', '3rd', '4th'] as const;
+
 interface Props {
   angle: number;
   reflectionCount: number;
   stageRatios: StageRatios;
   blocks: BlockRatio[];
   blockEditMode: boolean;
+  detecting: boolean;
+  detectedTurn: number | null;
   onAngleDelta: (delta: number) => void;
   onReflectionCountChange: (count: number) => void;
   onStageRatiosChange: (ratios: StageRatios) => void;
   onBlocksChange: (blocks: BlockRatio[]) => void;
   onBlockEditModeChange: (mode: boolean) => void;
+  onAutoDetect: () => void;
   onImageSelect: () => void;
 }
 
@@ -25,11 +30,14 @@ export function ControlPanel({
   stageRatios,
   blocks,
   blockEditMode,
+  detecting,
+  detectedTurn,
   onAngleDelta,
   onReflectionCountChange,
   onStageRatiosChange,
   onBlocksChange,
   onBlockEditModeChange,
+  onAutoDetect,
   onImageSelect,
 }: Props) {
   const intervalRef = useRef<number | null>(null);
@@ -127,6 +135,18 @@ export function ControlPanel({
         </div>
 
         <div className="flex-1" />
+
+        <button
+          onClick={onAutoDetect}
+          disabled={detecting}
+          className={`px-2 h-8 rounded text-xs font-medium transition-colors select-none ${
+            detecting
+              ? 'bg-gray-600 text-gray-400 cursor-wait'
+              : 'bg-orange-600 text-white active:bg-orange-700'
+          }`}
+        >
+          {detecting ? '検出中...' : detectedTurn !== null ? `検出(${TURN_LABELS[detectedTurn]})` : '自動検出'}
+        </button>
 
         <button
           onClick={onImageSelect}

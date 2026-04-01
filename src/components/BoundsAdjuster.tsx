@@ -5,7 +5,7 @@ interface Props {
   onChange: (ratios: StageRatios) => void;
 }
 
-const STEP = 0.005; // 0.5%
+const STEP = 0.001; // 0.1%
 
 function RatioRow({
   label,
@@ -45,7 +45,7 @@ export function BoundsAdjuster({ ratios, onChange }: Props) {
 
   return (
     <div className="space-y-1.5">
-      <div className="text-gray-500 text-xs font-bold">枠位置調整 (0.5%刻み)</div>
+      <div className="text-gray-500 text-xs font-bold">枠位置調整 (0.1%刻み)</div>
       <RatioRow label="上" value={ratios.top} onChange={(v) => update('top', v)} />
       <RatioRow label="下" value={ratios.bottom} onChange={(v) => update('bottom', v)} />
       <RatioRow label="左" value={ratios.left} onChange={(v) => update('left', v)} />

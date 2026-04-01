@@ -17,7 +17,7 @@ export const CARD_PADDING_RATIO = 0.05; // padding on left/right of card strip
 // Defaults
 export const DEFAULT_ANGLE = 90; // degrees, 0 = right, 90 = up
 export const DEFAULT_REFLECTION_COUNT = 3;
-export const DEFAULT_LINE_LENGTH_RATIO = 5.0; // multiplier of stage diagonal (max)
+export const DEFAULT_LINE_LENGTH_RATIO = 10.0; // multiplier of stage diagonal (max)
 export const ANGLE_STEP = 0.25; // degrees per button press
 export const ANGLE_STEP_FAST = 5; // degrees per long press tick
 
