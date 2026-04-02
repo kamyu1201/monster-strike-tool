@@ -1,3 +1,4 @@
+import { useRef, useCallback, useEffect } from 'react';
 import type { StageRatios } from '../lib/stageBounds';
 
 interface Props {
@@ -6,6 +7,46 @@ interface Props {
 }
 
 const STEP = 0.001; // 0.1%
+
+function RepeatButton({
+  onAction,
+  className,
+  children,
+}: {
+  onAction: () => void;
+  className: string;
+  children: React.ReactNode;
+}) {
+  const intervalRef = useRef<number | null>(null);
+
+  const stop = useCallback(() => {
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => stop, [stop]);
+
+  const start = () => {
+    stop();
+    onAction();
+    intervalRef.current = window.setInterval(onAction, 100);
+  };
+
+  return (
+    <button
+      onMouseDown={start}
+      onMouseUp={stop}
+      onMouseLeave={stop}
+      onTouchStart={(e) => { e.preventDefault(); start(); }}
+      onTouchEnd={(e) => { e.preventDefault(); stop(); }}
+      className={className}
+    >
+      {children}
+    </button>
+  );
+}
 
 function RatioRow({
   label,
@@ -19,21 +60,21 @@ function RatioRow({
   return (
     <div className="flex items-center gap-2">
       <span className="text-gray-400 text-xs w-6 text-right">{label}</span>
-      <button
-        onClick={() => onChange(Math.max(0, value - STEP))}
+      <RepeatButton
+        onAction={() => onChange(Math.max(0, value - STEP))}
         className="w-8 h-7 bg-gray-700 rounded text-white text-sm font-bold active:bg-gray-600 select-none"
       >
         -
-      </button>
+      </RepeatButton>
       <span className="text-gray-300 text-xs font-mono w-12 text-center">
         {(value * 100).toFixed(1)}%
       </span>
-      <button
-        onClick={() => onChange(Math.min(1, value + STEP))}
+      <RepeatButton
+        onAction={() => onChange(Math.min(1, value + STEP))}
         className="w-8 h-7 bg-gray-700 rounded text-white text-sm font-bold active:bg-gray-600 select-none"
       >
         +
-      </button>
+      </RepeatButton>
     </div>
   );
 }
