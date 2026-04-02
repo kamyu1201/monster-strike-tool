@@ -10,6 +10,7 @@ interface Props {
   blockEditMode: boolean;
   onCanvasTap: (imagePoint: Point) => void;
   onBlockDrag: (blockIndex: number, imagePoint: Point) => void;
+  onCharacterDrag: (imagePoint: Point) => void;
 }
 
 function drawStyledLine(
@@ -56,10 +57,12 @@ function drawGuideLines(
 
   ctx.setLineDash([10, 6]);
 
-  // Parallel guide lines through left corners
+  // Parallel guide lines through all four corners
   const corners: Point[] = [
     { x: left, y: top },
     { x: left, y: bottom },
+    { x: right, y: top },
+    { x: right, y: bottom },
   ];
 
   for (const corner of corners) {
@@ -152,11 +155,12 @@ export function StageCanvas({
   blockEditMode,
   onCanvasTap,
   onBlockDrag,
+  onCharacterDrag,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scaleRef = useRef(1);
   const hasScrolled = useRef(false);
-  const draggingRef = useRef<{ blockIndex: number; startPoint: Point } | null>(null);
+  const draggingRef = useRef<{ type: 'block'; blockIndex: number } | { type: 'character' } | null>(null);
   const hasDragged = useRef(false);
 
   // Auto-scroll to show stage area after image loads
@@ -269,19 +273,35 @@ export function StageCanvas({
     draw();
   }, [draw]);
 
-  // Touch/mouse drag handling for blocks
+  // Touch/mouse drag handling for blocks and character
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const CHAR_HIT_RADIUS = 30; // pixels in image coords
+
+    const isNearCharacter = (point: Point): boolean => {
+      if (!characterPos) return false;
+      const dx = point.x - characterPos.x;
+      const dy = point.y - characterPos.y;
+      return Math.sqrt(dx * dx + dy * dy) < CHAR_HIT_RADIUS;
+    };
+
     const handleStart = (e: TouchEvent | MouseEvent) => {
-      if (!blockEditMode || !image) return;
+      if (!image) return;
       const scale = scaleRef.current;
       const point = getImagePoint(e, canvas, scale);
-      const hitIndex = findBlockAtPoint(point, blockRects);
-      if (hitIndex >= 0) {
+
+      if (blockEditMode) {
+        const hitIndex = findBlockAtPoint(point, blockRects);
+        if (hitIndex >= 0) {
+          e.preventDefault();
+          draggingRef.current = { type: 'block', blockIndex: hitIndex };
+          hasDragged.current = false;
+        }
+      } else if (isNearCharacter(point)) {
         e.preventDefault();
-        draggingRef.current = { blockIndex: hitIndex, startPoint: point };
+        draggingRef.current = { type: 'character' };
         hasDragged.current = false;
       }
     };
@@ -292,7 +312,12 @@ export function StageCanvas({
       const scale = scaleRef.current;
       const point = getImagePoint(e, canvas, scale);
       hasDragged.current = true;
-      onBlockDrag(draggingRef.current.blockIndex, point);
+
+      if (draggingRef.current.type === 'block') {
+        onBlockDrag(draggingRef.current.blockIndex, point);
+      } else {
+        onCharacterDrag(point);
+      }
     };
 
     const handleEnd = () => {
@@ -314,7 +339,7 @@ export function StageCanvas({
       canvas.removeEventListener('mousemove', handleMove);
       canvas.removeEventListener('mouseup', handleEnd);
     };
-  }, [blockEditMode, blockRects, image, onBlockDrag]);
+  }, [blockEditMode, blockRects, characterPos, image, onBlockDrag, onCharacterDrag]);
 
   const handleTap = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     // Skip if we just finished a drag

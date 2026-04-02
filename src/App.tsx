@@ -127,6 +127,10 @@ function App() {
     setCharacterPos(point);
   }, [stageBounds, blockEditMode, blockRatios]);
 
+  const handleCharacterDrag = useCallback((point: Point) => {
+    setCharacterPos(point);
+  }, []);
+
   const handleBlockDrag = useCallback((blockIndex: number, point: Point) => {
     if (!stageBounds) return;
     const ratio = pointToBlockRatio(point, stageBounds);
@@ -214,6 +218,7 @@ function App() {
             blockEditMode={blockEditMode}
             onCanvasTap={handleCanvasTap}
             onBlockDrag={handleBlockDrag}
+            onCharacterDrag={handleCharacterDrag}
           />
           {!characterPos && !blockEditMode && (
             <div className="text-center text-yellow-400 text-sm py-2 bg-gray-900/80">
