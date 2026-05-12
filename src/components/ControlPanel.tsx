@@ -48,12 +48,10 @@ export function ControlPanel({
     return stopRepeat;
   }, [stopRepeat]);
 
-  const startRepeat = (delta: number) => {
+  const startRepeat = (action: () => void) => {
     stopRepeat();
-    onAngleDelta(delta);
-    intervalRef.current = window.setInterval(() => {
-      onAngleDelta(delta);
-    }, 80);
+    action();
+    intervalRef.current = window.setInterval(action, 80);
   };
 
   return (
@@ -61,20 +59,20 @@ export function ControlPanel({
       {/* Angle controls */}
       <div className="flex items-center justify-between gap-3">
         <button
-          onMouseDown={() => startRepeat(ANGLE_STEP_FAST)}
+          onMouseDown={() => startRepeat(() => onAngleDelta(ANGLE_STEP_FAST))}
           onMouseUp={stopRepeat}
           onMouseLeave={stopRepeat}
-          onTouchStart={(e) => { e.preventDefault(); startRepeat(ANGLE_STEP_FAST); }}
+          onTouchStart={(e) => { e.preventDefault(); startRepeat(() => onAngleDelta(ANGLE_STEP_FAST)); }}
           onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
           className="w-12 h-12 bg-gray-700 rounded-lg text-white text-xl font-bold active:bg-gray-600 select-none"
         >
           &laquo;
         </button>
         <button
-          onMouseDown={() => startRepeat(ANGLE_STEP)}
+          onMouseDown={() => startRepeat(() => onAngleDelta(ANGLE_STEP))}
           onMouseUp={stopRepeat}
           onMouseLeave={stopRepeat}
-          onTouchStart={(e) => { e.preventDefault(); startRepeat(ANGLE_STEP); }}
+          onTouchStart={(e) => { e.preventDefault(); startRepeat(() => onAngleDelta(ANGLE_STEP)); }}
           onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
           className="w-12 h-12 bg-gray-700 rounded-lg text-white text-xl font-bold active:bg-gray-600 select-none"
         >
@@ -89,20 +87,20 @@ export function ControlPanel({
         </button>
 
         <button
-          onMouseDown={() => startRepeat(-ANGLE_STEP)}
+          onMouseDown={() => startRepeat(() => onAngleDelta(-ANGLE_STEP))}
           onMouseUp={stopRepeat}
           onMouseLeave={stopRepeat}
-          onTouchStart={(e) => { e.preventDefault(); startRepeat(-ANGLE_STEP); }}
+          onTouchStart={(e) => { e.preventDefault(); startRepeat(() => onAngleDelta(-ANGLE_STEP)); }}
           onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
           className="w-12 h-12 bg-gray-700 rounded-lg text-white text-xl font-bold active:bg-gray-600 select-none"
         >
           &rsaquo;
         </button>
         <button
-          onMouseDown={() => startRepeat(-ANGLE_STEP_FAST)}
+          onMouseDown={() => startRepeat(() => onAngleDelta(-ANGLE_STEP_FAST))}
           onMouseUp={stopRepeat}
           onMouseLeave={stopRepeat}
-          onTouchStart={(e) => { e.preventDefault(); startRepeat(-ANGLE_STEP_FAST); }}
+          onTouchStart={(e) => { e.preventDefault(); startRepeat(() => onAngleDelta(-ANGLE_STEP_FAST)); }}
           onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
           className="w-12 h-12 bg-gray-700 rounded-lg text-white text-xl font-bold active:bg-gray-600 select-none"
         >
@@ -135,27 +133,43 @@ export function ControlPanel({
         <div className="flex items-center gap-1">
           <span className="text-gray-400 text-xs whitespace-nowrap">位置</span>
           <button
-            onClick={() => onPosDelta(-1, 0)}
+            onMouseDown={() => startRepeat(() => onPosDelta(-1, 0))}
+            onMouseUp={stopRepeat}
+            onMouseLeave={stopRepeat}
+            onTouchStart={(e) => { e.preventDefault(); startRepeat(() => onPosDelta(-1, 0)); }}
+            onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
             className="w-8 h-8 bg-gray-700 rounded text-white text-sm font-bold active:bg-gray-600 select-none"
           >
             ←
           </button>
           <div className="flex flex-col gap-1">
             <button
-              onClick={() => onPosDelta(0, -1)}
+              onMouseDown={() => startRepeat(() => onPosDelta(0, -1))}
+              onMouseUp={stopRepeat}
+              onMouseLeave={stopRepeat}
+              onTouchStart={(e) => { e.preventDefault(); startRepeat(() => onPosDelta(0, -1)); }}
+              onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
               className="w-8 h-6 bg-gray-700 rounded text-white text-xs font-bold active:bg-gray-600 select-none"
             >
               ↑
             </button>
             <button
-              onClick={() => onPosDelta(0, 1)}
+              onMouseDown={() => startRepeat(() => onPosDelta(0, 1))}
+              onMouseUp={stopRepeat}
+              onMouseLeave={stopRepeat}
+              onTouchStart={(e) => { e.preventDefault(); startRepeat(() => onPosDelta(0, 1)); }}
+              onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
               className="w-8 h-6 bg-gray-700 rounded text-white text-xs font-bold active:bg-gray-600 select-none"
             >
               ↓
             </button>
           </div>
           <button
-            onClick={() => onPosDelta(1, 0)}
+            onMouseDown={() => startRepeat(() => onPosDelta(1, 0))}
+            onMouseUp={stopRepeat}
+            onMouseLeave={stopRepeat}
+            onTouchStart={(e) => { e.preventDefault(); startRepeat(() => onPosDelta(1, 0)); }}
+            onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
             className="w-8 h-8 bg-gray-700 rounded text-white text-sm font-bold active:bg-gray-600 select-none"
           >
             →
