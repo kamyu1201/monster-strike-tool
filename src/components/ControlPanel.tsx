@@ -5,23 +5,18 @@ import type { BlockRatio } from '../types';
 import { BoundsAdjuster } from './BoundsAdjuster';
 import { BlockPanel } from './BlockPanel';
 
-const TURN_LABELS = ['1st', '2nd', '3rd', '4th'] as const;
-
 interface Props {
   reflectionCount: number;
   stageRatios: StageRatios;
   blocks: BlockRatio[];
   blockEditMode: boolean;
-  detecting: boolean;
-  detectedTurn: number | null;
   onFlip: () => void;
   onAngleDelta: (delta: number) => void;
+  onPosDelta: (dx: number, dy: number) => void;
   onReflectionCountChange: (count: number) => void;
   onStageRatiosChange: (ratios: StageRatios) => void;
   onBlocksChange: (blocks: BlockRatio[]) => void;
   onBlockEditModeChange: (mode: boolean) => void;
-  onAutoDetect: () => void;
-  onManualTurnSelect: (turnIndex: number) => void;
   onImageSelect: () => void;
 }
 
@@ -30,16 +25,13 @@ export function ControlPanel({
   stageRatios,
   blocks,
   blockEditMode,
-  detecting,
-  detectedTurn,
   onFlip,
   onAngleDelta,
+  onPosDelta,
   onReflectionCountChange,
   onStageRatiosChange,
   onBlocksChange,
   onBlockEditModeChange,
-  onAutoDetect,
-  onManualTurnSelect,
   onImageSelect,
 }: Props) {
   const intervalRef = useRef<number | null>(null);
@@ -139,19 +131,38 @@ export function ControlPanel({
           </button>
         </div>
 
-        <div className="flex-1" />
+        {/* Position adjustment */}
+        <div className="flex items-center gap-1">
+          <span className="text-gray-400 text-xs whitespace-nowrap">位置</span>
+          <button
+            onClick={() => onPosDelta(-1, 0)}
+            className="w-8 h-8 bg-gray-700 rounded text-white text-sm font-bold active:bg-gray-600 select-none"
+          >
+            ←
+          </button>
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() => onPosDelta(0, -1)}
+              className="w-8 h-6 bg-gray-700 rounded text-white text-xs font-bold active:bg-gray-600 select-none"
+            >
+              ↑
+            </button>
+            <button
+              onClick={() => onPosDelta(0, 1)}
+              className="w-8 h-6 bg-gray-700 rounded text-white text-xs font-bold active:bg-gray-600 select-none"
+            >
+              ↓
+            </button>
+          </div>
+          <button
+            onClick={() => onPosDelta(1, 0)}
+            className="w-8 h-8 bg-gray-700 rounded text-white text-sm font-bold active:bg-gray-600 select-none"
+          >
+            →
+          </button>
+        </div>
 
-        <button
-          onClick={onAutoDetect}
-          disabled={detecting}
-          className={`px-2 h-8 rounded text-xs font-medium transition-colors select-none ${
-            detecting
-              ? 'bg-gray-600 text-gray-400 cursor-wait'
-              : 'bg-orange-600 text-white active:bg-orange-700'
-          }`}
-        >
-          {detecting ? '検出中...' : detectedTurn !== null ? `検出(${TURN_LABELS[detectedTurn]})` : '自動検出'}
-        </button>
+        <div className="flex-1" />
 
         <button
           onClick={onImageSelect}
@@ -168,27 +179,6 @@ export function ControlPanel({
         >
           枠調整
         </button>
-      </div>
-
-      {/* Manual turn select */}
-      <div className="flex items-center gap-2">
-        <span className="text-gray-400 text-xs whitespace-nowrap">手番指定</span>
-        {TURN_LABELS.map((label, i) => (
-          <button
-            key={label}
-            onClick={() => onManualTurnSelect(i)}
-            disabled={detecting}
-            className={`flex-1 h-7 rounded text-xs font-medium transition-colors select-none ${
-              detectedTurn === i
-                ? 'bg-orange-600 text-white'
-                : detecting
-                  ? 'bg-gray-700 text-gray-500 cursor-wait'
-                  : 'bg-gray-700 text-gray-300 active:bg-gray-600'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
       </div>
 
       {/* Block panel */}

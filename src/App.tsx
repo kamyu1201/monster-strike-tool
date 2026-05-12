@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback, useRef } from 'react';
 import type { Point, BlockRatio } from './types';
 import { calcStageBounds, type StageRatios } from './lib/stageBounds';
 import { blockRatiosToRects, pointToBlockRatio, findBlockAtPoint } from './lib/blockUtils';
-import { autoDetectCharacter, detectCharPosition } from './lib/detectCharPosition';
 import { useReflectionLine } from './hooks/useReflectionLine';
 import { StageCanvas } from './components/StageCanvas';
 import { ControlPanel } from './components/ControlPanel';
@@ -54,8 +53,6 @@ function App() {
   const [stageRatios, setStageRatios] = useState<StageRatios>(loadSavedRatios);
   const [blockRatios, setBlockRatios] = useState<BlockRatio[]>([]);
   const [blockEditMode, setBlockEditMode] = useState(false);
-  const [detecting, setDetecting] = useState(false);
-  const [detectedTurn, setDetectedTurn] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const stageBounds = useMemo(() => {
@@ -87,7 +84,6 @@ function App() {
   const handleImageLoad = useCallback((img: HTMLImageElement) => {
     setImage(img);
     setCharacterPos(null);
-    setDetectedTurn(null);
     setAngle(DEFAULT_ANGLE);
     setReflectionCount(DEFAULT_REFLECTION_COUNT);
     setLineLengthRatio(DEFAULT_LINE_LENGTH_RATIO);
@@ -150,35 +146,12 @@ function App() {
     }
   }, []);
 
-  const handleAutoDetect = useCallback(async () => {
-    if (!image || !stageBounds || detecting) return;
-    setDetecting(true);
-    try {
-      const result = await autoDetectCharacter(image, stageBounds);
-      if (result) {
-        setCharacterPos(result.position);
-        setDetectedTurn(result.turnIndex);
-      } else {
-        setDetectedTurn(null);
-      }
-    } finally {
-      setDetecting(false);
-    }
-  }, [image, stageBounds, detecting]);
-
-  const handleManualTurnSelect = useCallback(async (turnIndex: number) => {
-    if (!image || !stageBounds || detecting) return;
-    setDetecting(true);
-    try {
-      const position = await detectCharPosition(image, turnIndex, stageBounds);
-      if (position) {
-        setCharacterPos(position);
-        setDetectedTurn(turnIndex);
-      }
-    } finally {
-      setDetecting(false);
-    }
-  }, [image, stageBounds, detecting]);
+  const handlePosDelta = useCallback((dx: number, dy: number) => {
+    setCharacterPos((prev) => {
+      if (!prev) return prev;
+      return { x: prev.x + dx, y: prev.y + dy };
+    });
+  }, []);
 
   const handleAngleDelta = useCallback((delta: number) => {
     setAngle((prev) => prev + delta);
@@ -234,16 +207,13 @@ function App() {
             stageRatios={stageRatios}
             blocks={blockRatios}
             blockEditMode={blockEditMode}
-            detecting={detecting}
-            detectedTurn={detectedTurn}
             onFlip={handleFlip}
             onAngleDelta={handleAngleDelta}
+            onPosDelta={handlePosDelta}
             onReflectionCountChange={setReflectionCount}
             onStageRatiosChange={handleStageRatiosChange}
             onBlocksChange={setBlockRatios}
             onBlockEditModeChange={setBlockEditMode}
-            onAutoDetect={handleAutoDetect}
-            onManualTurnSelect={handleManualTurnSelect}
             onImageSelect={() => fileInputRef.current?.click()}
           />
         </div>
