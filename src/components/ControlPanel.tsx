@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
+import { ANGLE_STEP, ANGLE_STEP_FAST } from '../constants';
 import type { StageRatios } from '../lib/stageBounds';
 import type { BlockRatio } from '../types';
 import { BoundsAdjuster } from './BoundsAdjuster';
@@ -14,6 +15,7 @@ interface Props {
   detecting: boolean;
   detectedTurn: number | null;
   onFlip: () => void;
+  onAngleDelta: (delta: number) => void;
   onReflectionCountChange: (count: number) => void;
   onStageRatiosChange: (ratios: StageRatios) => void;
   onBlocksChange: (blocks: BlockRatio[]) => void;
@@ -31,6 +33,7 @@ export function ControlPanel({
   detecting,
   detectedTurn,
   onFlip,
+  onAngleDelta,
   onReflectionCountChange,
   onStageRatiosChange,
   onBlocksChange,
@@ -39,10 +42,81 @@ export function ControlPanel({
   onManualTurnSelect,
   onImageSelect,
 }: Props) {
+  const intervalRef = useRef<number | null>(null);
   const [showBounds, setShowBounds] = useState(false);
+
+  const stopRepeat = useCallback(() => {
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return stopRepeat;
+  }, [stopRepeat]);
+
+  const startRepeat = (delta: number) => {
+    stopRepeat();
+    onAngleDelta(delta);
+    intervalRef.current = window.setInterval(() => {
+      onAngleDelta(delta);
+    }, 80);
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur border-t border-gray-700 px-4 py-3 space-y-3">
+      {/* Angle controls */}
+      <div className="flex items-center justify-between gap-3">
+        <button
+          onMouseDown={() => startRepeat(ANGLE_STEP_FAST)}
+          onMouseUp={stopRepeat}
+          onMouseLeave={stopRepeat}
+          onTouchStart={(e) => { e.preventDefault(); startRepeat(ANGLE_STEP_FAST); }}
+          onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
+          className="w-12 h-12 bg-gray-700 rounded-lg text-white text-xl font-bold active:bg-gray-600 select-none"
+        >
+          &laquo;
+        </button>
+        <button
+          onMouseDown={() => startRepeat(ANGLE_STEP)}
+          onMouseUp={stopRepeat}
+          onMouseLeave={stopRepeat}
+          onTouchStart={(e) => { e.preventDefault(); startRepeat(ANGLE_STEP); }}
+          onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
+          className="w-12 h-12 bg-gray-700 rounded-lg text-white text-xl font-bold active:bg-gray-600 select-none"
+        >
+          &lsaquo;
+        </button>
+
+        <button
+          onClick={onFlip}
+          className="flex-1 h-12 bg-blue-600 rounded-lg text-white text-sm font-medium active:bg-blue-700 select-none"
+        >
+          180°反転
+        </button>
+
+        <button
+          onMouseDown={() => startRepeat(-ANGLE_STEP)}
+          onMouseUp={stopRepeat}
+          onMouseLeave={stopRepeat}
+          onTouchStart={(e) => { e.preventDefault(); startRepeat(-ANGLE_STEP); }}
+          onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
+          className="w-12 h-12 bg-gray-700 rounded-lg text-white text-xl font-bold active:bg-gray-600 select-none"
+        >
+          &rsaquo;
+        </button>
+        <button
+          onMouseDown={() => startRepeat(-ANGLE_STEP_FAST)}
+          onMouseUp={stopRepeat}
+          onMouseLeave={stopRepeat}
+          onTouchStart={(e) => { e.preventDefault(); startRepeat(-ANGLE_STEP_FAST); }}
+          onTouchEnd={(e) => { e.preventDefault(); stopRepeat(); }}
+          className="w-12 h-12 bg-gray-700 rounded-lg text-white text-xl font-bold active:bg-gray-600 select-none"
+        >
+          &raquo;
+        </button>
+      </div>
 
       {/* Reflection count & options */}
       <div className="flex items-center gap-4">
@@ -64,13 +138,6 @@ export function ControlPanel({
             +
           </button>
         </div>
-
-        <button
-          onClick={onFlip}
-          className="px-3 h-8 bg-blue-600 rounded text-white text-xs font-medium active:bg-blue-700 select-none"
-        >
-          180°反転
-        </button>
 
         <div className="flex-1" />
 

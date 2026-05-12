@@ -180,6 +180,10 @@ function App() {
     }
   }, [image, stageBounds, detecting]);
 
+  const handleAngleDelta = useCallback((delta: number) => {
+    setAngle((prev) => prev + delta);
+  }, []);
+
   const handleFlip = useCallback(() => {
     setAngle((prev) => prev + 180);
   }, []);
@@ -233,6 +237,7 @@ function App() {
             detecting={detecting}
             detectedTurn={detectedTurn}
             onFlip={handleFlip}
+            onAngleDelta={handleAngleDelta}
             onReflectionCountChange={setReflectionCount}
             onStageRatiosChange={handleStageRatiosChange}
             onBlocksChange={setBlockRatios}
