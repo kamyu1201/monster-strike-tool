@@ -10,7 +10,8 @@ interface Props {
   stageRatios: StageRatios;
   blocks: BlockRatio[];
   blockEditMode: boolean;
-  onFlip: () => void;
+  onFlipVertical: () => void;
+  onFlipHorizontal: () => void;
   onAngleDelta: (delta: number) => void;
   onPosDelta: (dx: number, dy: number) => void;
   onReflectionCountChange: (count: number) => void;
@@ -25,7 +26,8 @@ export function ControlPanel({
   stageRatios,
   blocks,
   blockEditMode,
-  onFlip,
+  onFlipVertical,
+  onFlipHorizontal,
   onAngleDelta,
   onPosDelta,
   onReflectionCountChange,
@@ -80,10 +82,16 @@ export function ControlPanel({
         </button>
 
         <button
-          onClick={onFlip}
-          className="flex-1 h-12 bg-blue-600 rounded-lg text-white text-sm font-medium active:bg-blue-700 select-none"
+          onClick={onFlipVertical}
+          className="flex-1 h-12 bg-blue-600 rounded-lg text-white text-xs font-medium active:bg-blue-700 select-none"
         >
-          180°反転
+          縦軸反転
+        </button>
+        <button
+          onClick={onFlipHorizontal}
+          className="flex-1 h-12 bg-blue-600 rounded-lg text-white text-xs font-medium active:bg-blue-700 select-none"
+        >
+          横軸反転
         </button>
 
         <button

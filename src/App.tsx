@@ -157,8 +157,12 @@ function App() {
     setAngle((prev) => prev + delta);
   }, []);
 
-  const handleFlip = useCallback(() => {
-    setAngle((prev) => prev + 180);
+  const handleFlipVertical = useCallback(() => {
+    setAngle((prev) => 180 - prev);
+  }, []);
+
+  const handleFlipHorizontal = useCallback(() => {
+    setAngle((prev) => -prev);
   }, []);
 
   return (
@@ -207,7 +211,8 @@ function App() {
             stageRatios={stageRatios}
             blocks={blockRatios}
             blockEditMode={blockEditMode}
-            onFlip={handleFlip}
+            onFlipVertical={handleFlipVertical}
+            onFlipHorizontal={handleFlipHorizontal}
             onAngleDelta={handleAngleDelta}
             onPosDelta={handlePosDelta}
             onReflectionCountChange={setReflectionCount}
