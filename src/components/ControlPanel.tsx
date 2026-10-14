@@ -1,13 +1,10 @@
-import { useRef, useCallback, useEffect, useState } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { ANGLE_STEP, ANGLE_STEP_FAST } from '../constants';
-import type { StageRatios } from '../lib/stageBounds';
 import type { BlockRatio } from '../types';
-import { BoundsAdjuster } from './BoundsAdjuster';
 import { BlockPanel } from './BlockPanel';
 
 interface Props {
   reflectionCount: number;
-  stageRatios: StageRatios;
   blocks: BlockRatio[];
   blockEditMode: boolean;
   reverseShotMode: boolean;
@@ -16,7 +13,6 @@ interface Props {
   onAngleDelta: (delta: number) => void;
   onPosDelta: (dx: number, dy: number) => void;
   onReflectionCountChange: (count: number) => void;
-  onStageRatiosChange: (ratios: StageRatios) => void;
   onBlocksChange: (blocks: BlockRatio[]) => void;
   onBlockEditModeChange: (mode: boolean) => void;
   onReverseShotModeChange: (mode: boolean) => void;
@@ -25,7 +21,6 @@ interface Props {
 
 export function ControlPanel({
   reflectionCount,
-  stageRatios,
   blocks,
   blockEditMode,
   reverseShotMode,
@@ -34,14 +29,12 @@ export function ControlPanel({
   onAngleDelta,
   onPosDelta,
   onReflectionCountChange,
-  onStageRatiosChange,
   onBlocksChange,
   onBlockEditModeChange,
   onReverseShotModeChange,
   onImageSelect,
 }: Props) {
   const intervalRef = useRef<number | null>(null);
-  const [showBounds, setShowBounds] = useState(false);
 
   const stopRepeat = useCallback(() => {
     if (intervalRef.current !== null) {
@@ -194,16 +187,7 @@ export function ControlPanel({
           onClick={onImageSelect}
           className="px-2 h-8 bg-indigo-600 rounded text-white text-xs font-medium active:bg-indigo-700 select-none"
         >
-          画像選択
-        </button>
-
-        <button
-          onClick={() => setShowBounds((v) => !v)}
-          className={`px-2 h-8 rounded text-xs font-medium transition-colors select-none ${
-            showBounds ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300'
-          }`}
-        >
-          枠調整
+          画像
         </button>
 
         <button
@@ -223,11 +207,6 @@ export function ControlPanel({
         onEditModeChange={onBlockEditModeChange}
         onBlocksChange={onBlocksChange}
       />
-
-      {/* Bounds adjuster (collapsible) */}
-      {showBounds && (
-        <BoundsAdjuster ratios={stageRatios} onChange={onStageRatiosChange} />
-      )}
     </div>
   );
 }

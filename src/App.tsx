@@ -5,6 +5,7 @@ import { blockRatiosToRects, pointToBlockRatio, findBlockAtPoint } from './lib/b
 import { useReflectionLine } from './hooks/useReflectionLine';
 import { StageCanvas } from './components/StageCanvas';
 import { ControlPanel } from './components/ControlPanel';
+import { BoundsAdjuster } from './components/BoundsAdjuster';
 import {
   STAGE_LEFT_RATIO,
   STAGE_RIGHT_RATIO,
@@ -55,6 +56,7 @@ function App() {
   const [blockRatios, setBlockRatios] = useState<BlockRatio[]>([]);
   const [blockEditMode, setBlockEditMode] = useState(false);
   const [reverseShotMode, setReverseShotMode] = useState(false);
+  const [showBounds, setShowBounds] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const stageBounds = useMemo(() => {
@@ -218,9 +220,21 @@ function App() {
               画面をタップしてキャラクター位置を指定してください
             </div>
           )}
+          <div className="px-4 py-3 space-y-3 border-t border-gray-800 bg-gray-950">
+            <button
+              onClick={() => setShowBounds((v) => !v)}
+              className={`px-2 h-8 rounded text-xs font-medium transition-colors select-none ${
+                showBounds ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300'
+              }`}
+            >
+              枠調整
+            </button>
+            {showBounds && (
+              <BoundsAdjuster ratios={stageRatios} onChange={handleStageRatiosChange} />
+            )}
+          </div>
           <ControlPanel
             reflectionCount={reflectionCount}
-            stageRatios={stageRatios}
             blocks={blockRatios}
             blockEditMode={blockEditMode}
             reverseShotMode={reverseShotMode}
@@ -229,7 +243,6 @@ function App() {
             onAngleDelta={handleAngleDelta}
             onPosDelta={handlePosDelta}
             onReflectionCountChange={setReflectionCount}
-            onStageRatiosChange={handleStageRatiosChange}
             onBlocksChange={setBlockRatios}
             onBlockEditModeChange={setBlockEditMode}
             onReverseShotModeChange={setReverseShotMode}
