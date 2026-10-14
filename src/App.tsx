@@ -13,6 +13,7 @@ import {
   DEFAULT_ANGLE,
   DEFAULT_REFLECTION_COUNT,
   DEFAULT_LINE_LENGTH_RATIO,
+  REVERSE_SHOT_REFLECTION_COUNT,
 } from './constants';
 
 const DEFAULT_RATIOS: StageRatios = {
@@ -53,6 +54,7 @@ function App() {
   const [stageRatios, setStageRatios] = useState<StageRatios>(loadSavedRatios);
   const [blockRatios, setBlockRatios] = useState<BlockRatio[]>([]);
   const [blockEditMode, setBlockEditMode] = useState(false);
+  const [reverseShotMode, setReverseShotMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const stageBounds = useMemo(() => {
@@ -77,6 +79,15 @@ function App() {
     angle,
     stageBounds,
     reflectionCount,
+    lineLength,
+    blockRects,
+  );
+
+  const reverseSegments = useReflectionLine(
+    reverseShotMode ? characterPos : null,
+    angle + 180,
+    stageBounds,
+    REVERSE_SHOT_REFLECTION_COUNT,
     lineLength,
     blockRects,
   );
@@ -195,6 +206,7 @@ function App() {
             stageBounds={stageBounds}
             characterPos={characterPos}
             segments={segments}
+            reverseSegments={reverseSegments}
             blockRects={blockRects}
             blockEditMode={blockEditMode}
             onCanvasTap={handleCanvasTap}
@@ -211,6 +223,7 @@ function App() {
             stageRatios={stageRatios}
             blocks={blockRatios}
             blockEditMode={blockEditMode}
+            reverseShotMode={reverseShotMode}
             onFlipVertical={handleFlipVertical}
             onFlipHorizontal={handleFlipHorizontal}
             onAngleDelta={handleAngleDelta}
@@ -219,6 +232,7 @@ function App() {
             onStageRatiosChange={handleStageRatiosChange}
             onBlocksChange={setBlockRatios}
             onBlockEditModeChange={setBlockEditMode}
+            onReverseShotModeChange={setReverseShotMode}
             onImageSelect={() => fileInputRef.current?.click()}
           />
         </div>

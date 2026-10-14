@@ -10,6 +10,7 @@ interface Props {
   stageRatios: StageRatios;
   blocks: BlockRatio[];
   blockEditMode: boolean;
+  reverseShotMode: boolean;
   onFlipVertical: () => void;
   onFlipHorizontal: () => void;
   onAngleDelta: (delta: number) => void;
@@ -18,6 +19,7 @@ interface Props {
   onStageRatiosChange: (ratios: StageRatios) => void;
   onBlocksChange: (blocks: BlockRatio[]) => void;
   onBlockEditModeChange: (mode: boolean) => void;
+  onReverseShotModeChange: (mode: boolean) => void;
   onImageSelect: () => void;
 }
 
@@ -26,6 +28,7 @@ export function ControlPanel({
   stageRatios,
   blocks,
   blockEditMode,
+  reverseShotMode,
   onFlipVertical,
   onFlipHorizontal,
   onAngleDelta,
@@ -34,6 +37,7 @@ export function ControlPanel({
   onStageRatiosChange,
   onBlocksChange,
   onBlockEditModeChange,
+  onReverseShotModeChange,
   onImageSelect,
 }: Props) {
   const intervalRef = useRef<number | null>(null);
@@ -200,6 +204,15 @@ export function ControlPanel({
           }`}
         >
           枠調整
+        </button>
+
+        <button
+          onClick={() => onReverseShotModeChange(!reverseShotMode)}
+          className={`px-2 h-8 rounded text-xs font-medium transition-colors select-none ${
+            reverseShotMode ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-gray-300'
+          }`}
+        >
+          逆弾
         </button>
       </div>
 

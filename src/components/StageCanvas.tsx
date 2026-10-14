@@ -6,6 +6,7 @@ interface Props {
   stageBounds: Rect | null;
   characterPos: Point | null;
   segments: ReflectionSegment[];
+  reverseSegments: ReflectionSegment[];
   blockRects: Rect[];
   blockEditMode: boolean;
   onCanvasTap: (imagePoint: Point) => void;
@@ -151,6 +152,7 @@ export function StageCanvas({
   stageBounds,
   characterPos,
   segments,
+  reverseSegments,
   blockRects,
   blockEditMode,
   onCanvasTap,
@@ -216,11 +218,35 @@ export function StageCanvas({
 
     // Draw blocks
     for (const block of blockRects) {
+      const bx = block.x * scale;
+      const by = block.y * scale;
+      const bw = block.width * scale;
+      const bh = block.height * scale;
+
       ctx.fillStyle = 'rgba(120, 120, 120, 0.6)';
-      ctx.fillRect(block.x * scale, block.y * scale, block.width * scale, block.height * scale);
+      ctx.fillRect(bx, by, bw, bh);
       ctx.strokeStyle = 'rgba(200, 200, 200, 0.8)';
       ctx.lineWidth = 2;
-      ctx.strokeRect(block.x * scale, block.y * scale, block.width * scale, block.height * scale);
+      ctx.strokeRect(bx, by, bw, bh);
+
+      // Diagonals to highlight the center
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(bx, by);
+      ctx.lineTo(bx + bw, by + bh);
+      ctx.moveTo(bx + bw, by);
+      ctx.lineTo(bx, by + bh);
+      ctx.stroke();
+
+      // Inner square (half the side length), centered
+      const innerW = bw / 2;
+      const innerH = bh / 2;
+      const innerX = bx + (bw - innerW) / 2;
+      const innerY = by + (bh - innerH) / 2;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(innerX, innerY, innerW, innerH);
     }
 
     if (characterPos) {
@@ -235,6 +261,37 @@ export function StageCanvas({
 
     if (stageBounds && segments.length > 0) {
       drawGuideLines(ctx, segments, stageBounds, characterPos, scale);
+    }
+
+    if (reverseSegments.length > 0) {
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      ctx.strokeStyle = 'rgba(255, 220, 0, 0.3)';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(reverseSegments[0].start.x * scale, reverseSegments[0].start.y * scale);
+      for (const seg of reverseSegments) {
+        ctx.lineTo(seg.end.x * scale, seg.end.y * scale);
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 220, 0, 0.9)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(reverseSegments[0].start.x * scale, reverseSegments[0].start.y * scale);
+      for (const seg of reverseSegments) {
+        ctx.lineTo(seg.end.x * scale, seg.end.y * scale);
+      }
+      ctx.stroke();
+
+      for (let i = 0; i < reverseSegments.length - 1; i++) {
+        const pt = reverseSegments[i].end;
+        ctx.beginPath();
+        ctx.arc(pt.x * scale, pt.y * scale, 4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 180, 0, 0.9)';
+        ctx.fill();
+      }
     }
 
     if (segments.length > 0) {
@@ -267,7 +324,7 @@ export function StageCanvas({
         ctx.fill();
       }
     }
-  }, [image, stageBounds, characterPos, segments, blockRects]);
+  }, [image, stageBounds, characterPos, segments, reverseSegments, blockRects]);
 
   useEffect(() => {
     draw();

@@ -27,3 +27,6 @@ export const LABEL_TO_CHAR_OFFSET_Y_RATIO = 0.035;
 
 // Block size as ratio of stage dimensions (square block)
 export const BLOCK_SIZE_RATIO = 0.215; // block side length / stage width
+
+// Reverse shot (逆弾): fixed reflection count for Shambhala Star Tomb stage
+export const REVERSE_SHOT_REFLECTION_COUNT = 7;
